@@ -1,0 +1,14 @@
+# Target labels
+ sdl3-populate
+# Source files and their labels
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/CMakeFiles/sdl3-populate
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/CMakeFiles/sdl3-populate.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/CMakeFiles/sdl3-populate-complete.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-build.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-configure.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-download.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-install.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-mkdir.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-patch.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-test.rule
+/home/jaymes/isle-portable-3ds/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update.rule
