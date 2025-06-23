@@ -24,7 +24,7 @@ CMAKE_AR:STRING=/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc-ar
 
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
-CMAKE_BUILD_TYPE:STRING=
+CMAKE_BUILD_TYPE:STRING=Release
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -277,7 +277,7 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 CMAKE_THREAD_PREFER_PTHREAD:UNINITIALIZED=ON
 
 //No help, variable specified on the command line.
-CMAKE_TOOLCHAIN_FILE:UNINITIALIZED=DevkitArm3DS.cmake
+CMAKE_TOOLCHAIN_FILE:UNINITIALIZED=/opt/devkitpro/cmake/3DS.cmake
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -321,7 +321,7 @@ ISLE_ASAN:BOOL=OFF
 ISLE_BUILD_APP:BOOL=ON
 
 //Build CONFIG.EXE application
-ISLE_BUILD_CONFIG:BOOL=ON
+ISLE_BUILD_CONFIG:BOOL=OFF
 
 //Enable imgui debug
 ISLE_DEBUG:BOOL=ON

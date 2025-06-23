@@ -17,7 +17,8 @@ include(CMakePushCheckState)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
+set(CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu/cmake/Qt6/" ${CMAKE_PREFIX_PATH})
+set(Qt6_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6/")
 if (NOT MINGW)
   set(NOT_MINGW ON)
 else()
@@ -522,7 +523,7 @@ if (ISLE_BUILD_APP)
 endif()
 
 if (ISLE_BUILD_CONFIG)
-  find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+  find_package(Qt6 6.4.2 REQUIRED COMPONENTS Core Widgets)
   qt_standard_project_setup()
   qt_add_executable(config WIN32
     LEGO1/mxdirectx/mxdirectxinfo.cpp

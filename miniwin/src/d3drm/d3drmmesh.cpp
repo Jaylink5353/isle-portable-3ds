@@ -4,7 +4,7 @@
 #include <limits>
 
 //fix dword error
-typedef unit32_t DWORD;
+typedef uint32_t DWORD;
 
 HRESULT Direct3DRMMeshImpl::QueryInterface(const GUID& riid, void** ppvObject)
 {
@@ -62,7 +62,7 @@ HRESULT Direct3DRMMeshImpl::AddGroup(
 	MeshGroup group;
 	group.vertexPerFace = vertexPerFace;
 
-	DWORD* src = faceBuffer;
+	DWORD* src = reinterpret_cast<DWORD*>(faceBuffer);
 	group.indices.assign(src, src + faceCount * vertexPerFace);
 
 	m_groups.push_back(std::move(group));
