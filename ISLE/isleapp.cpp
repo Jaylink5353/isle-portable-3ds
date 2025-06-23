@@ -50,13 +50,15 @@
 #include "emscripten/messagebox.h"
 #endif
 
-char DebugFinder[] = "Begin";
+char* DebugFinder;
 
 #include <3ds.h>
 #include <stdio.h>
 
-consoleInit(GFX_BOTTOM, NULL);
-printf("Debug info...\n");
+int initThreeDeeS(){
+	consoleInit(GFX_BOTTOM, NULL);
+	printf("Debug info...\n");
+}
 
 DECOMP_SIZE_ASSERT(IsleApp, 0x8c)
 
