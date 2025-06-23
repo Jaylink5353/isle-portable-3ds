@@ -40,7 +40,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <errno.h>
-#include <iniparser.h>
+#include "../3rdparty/iniparser/iniparser.h"
 #include <stdlib.h>
 #include <time.h>
 

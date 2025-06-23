@@ -1,13 +1,21 @@
 cmake_minimum_required(VERSION 3.25...4.0 FATAL_ERROR)
 
 project(isle LANGUAGES CXX C VERSION 0.1)
+if(CMAKE_SYSTEM_NAME STREQUAL "3DS" OR DEFINED DEVKITPRO)
+  set(IS_3DS TRUE)
+else()
+  set(IS_3DS FALSE)
+endif()
+
+#this is for 3ds only, comment if ur not using 3ds ??
+set(IS_3DS TRUE)
 
 if (EMSCRIPTEN)
   add_compile_options(-pthread)
   add_link_options(-sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2gb -sUSE_PTHREADS=1 -sPROXY_TO_PTHREAD=1 -sPTHREAD_POOL_SIZE_STRICT=0 -sFORCE_FILESYSTEM=1 -sWASMFS=1 -sEXIT_RUNTIME=1)
   set(SDL_PTHREADS ON CACHE BOOL "Enable SDL pthreads" FORCE)
 endif()
-
+include_directories($ENV{DEVKITPRO}/portlibs/3ds/include/SDL3)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 include(CheckCXXSourceCompiles)
@@ -52,8 +60,15 @@ message(STATUS "Internal miniwin:       ${ISLE_MINIWIN}")
 message(STATUS "Isle debugging:         ${ISLE_DEBUG}")
 message(STATUS "Compile shaders:        ${ISLE_COMPILE_SHADERS}")
 
-if (DOWNLOAD_DEPENDENCIES)
-    # FetchContent downloads and configures dependencies
+if(IS_3DS)
+  # Use devkitPro's portlibs SDL3
+  set(SDL3_DIR "$ENV{DEVKITPRO}/portlibs/3ds/lib/cmake/SDL3")
+  set(CMAKE_PREFIX_PATH "${SDL3_DIR};${CMAKE_PREFIX_PATH}")
+  find_package(SDL3 REQUIRED CONFIG)
+  include_directories($ENV{DEVKITPRO}/portlibs/3ds/include/SDL3)
+  message(STATUS "Using SDL3 from devkitPro portlibs: ${SDL3_DIR}")
+else()
+  if (DOWNLOAD_DEPENDENCIES)
     message(STATUS "Fetching SDL3 and iniparser. This might take a while...")
     include(FetchContent)
     FetchContent_Declare(
@@ -63,28 +78,9 @@ if (DOWNLOAD_DEPENDENCIES)
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(SDL3)
-
-    FetchContent_Declare(
-        iniparser
-        GIT_REPOSITORY "https://gitlab.com/iniparser/iniparser.git"
-        GIT_TAG "main"
-        EXCLUDE_FROM_ALL
-    )
-    block()
-      set(BUILD_DOCS off)
-      set(BUILD_SHARED_LIBS off)
-      FetchContent_MakeAvailable(iniparser)
-    endblock()
-else()
-    # find_package looks for already-installed system packages.
-    # Configure with `-DCMAKE_PREFIX_PATH="/path/to/package1;/path/to/package2"`
-    # to add search paths.
+  else()
     find_package(SDL3 CONFIG REQUIRED)
-
-    find_package(iniparser CONFIG COMPONENTS static)
-    if (NOT TARGET iniparser-static)
-        find_package(iniparser REQUIRED MODULE COMPONENTS static)
-    endif()
+  endif()
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
