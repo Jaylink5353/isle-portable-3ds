@@ -1,7 +1,10 @@
 #include "d3drmmesh_impl.h"
 #include "miniwin.h"
-
+#include <cstdint>
 #include <limits>
+
+//fix dword error
+typedef unit32_t DWORD;
 
 HRESULT Direct3DRMMeshImpl::QueryInterface(const GUID& riid, void** ppvObject)
 {
