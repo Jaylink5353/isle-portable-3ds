@@ -50,6 +50,14 @@
 #include "emscripten/messagebox.h"
 #endif
 
+char DebugFinder[] = "Begin";
+
+#include <3ds.h>
+#include <stdio.h>
+
+consoleInit(GFX_BOTTOM, NULL);
+printf("Debug info...\n");
+
 DECOMP_SIZE_ASSERT(IsleApp, 0x8c)
 
 // GLOBAL: ISLE 0x410030
@@ -266,8 +274,13 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 		SDL_snprintf(
 			buffer,
 			sizeof(buffer),
-			"\"LEGO® Island\" failed to start.\nPlease quit all other applications and try again.\nSDL error: %s",
-			SDL_GetError()
+			"\"LEGO® Island\" failed to start.\n"
+			"Please quit all other applications and try again.\n"
+			"SDL error: %s.\n"
+			"Error: \n"
+			"DebugFinder: %s",
+			SDL_GetError(),
+			DebugFinder
 		);
 		Any_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "LEGO® Island Error", buffer, NULL);
 		return SDL_APP_FAILURE;
@@ -625,126 +638,176 @@ MxU8 IsleApp::MapMouseButtonFlagsToModifier(SDL_MouseButtonFlags p_flags)
 // FUNCTION: ISLE 0x4023e0
 MxResult IsleApp::SetupWindow()
 {
-	if (!LoadConfig()) {
-		return FAILURE;
-	}
+    DebugFinder = (char*)"LoadConfig";
+    printf("[SetupWindow] Loading configuration...\n");
+    if (!LoadConfig()) {
+        printf("[SetupWindow] LoadConfig failed\n");
+        return FAILURE;
+    }
+    printf("[SetupWindow] Configuration loaded\n");
 
-	SetupVideoFlags(
-		m_fullScreen,
-		m_flipSurfaces,
-		m_backBuffersInVram,
-		m_using8bit,
-		m_using16bit,
-		m_hasLightSupport,
-		FALSE,
-		m_wideViewAngle,
-		m_deviceId
-	);
+    DebugFinder = (char*)"SetupVideoFlags";
+    printf("[SetupWindow] Setting up video flags...\n");
+    SetupVideoFlags(
+        m_fullScreen,
+        m_flipSurfaces,
+        m_backBuffersInVram,
+        m_using8bit,
+        m_using16bit,
+        m_hasLightSupport,
+        FALSE,
+        m_wideViewAngle,
+        m_deviceId
+    );
+    printf("[SetupWindow] Video flags set\n");
 
-	MxOmni::SetSound3D(m_use3dSound);
+    DebugFinder = (char*)"SetSound3D";
+    printf("[SetupWindow] Setting 3D sound option...\n");
+    MxOmni::SetSound3D(m_use3dSound);
 
-	srand(time(NULL));
+    DebugFinder = (char*)"SeedRand";
+    printf("[SetupWindow] Seeding random number generator...\n");
+    srand(time(NULL));
 
-	// [library:window] Use original game cursors in the resources instead?
-	m_cursorCurrent = m_cursorArrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
-	m_cursorBusy = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
-	m_cursorNo = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NOT_ALLOWED);
-	SDL_SetCursor(m_cursorCurrent);
+    DebugFinder = (char*)"CreateCursors";
+    printf("[SetupWindow] Creating system cursors...\n");
+    m_cursorCurrent = m_cursorArrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
+    printf("[SetupWindow] m_cursorArrow created\n");
+    m_cursorBusy = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
+    printf("[SetupWindow] m_cursorBusy created\n");
+    m_cursorNo = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NOT_ALLOWED);
+    printf("[SetupWindow] m_cursorNo created\n");
+    SDL_SetCursor(m_cursorCurrent);
+    printf("[SetupWindow] SetCursor to m_cursorCurrent\n");
 
-	SDL_PropertiesID props = SDL_CreateProperties();
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, g_targetWidth);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, g_targetHeight);
-	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, m_fullScreen);
-	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, WINDOW_TITLE);
+    DebugFinder = (char*)"CreateWindowProps";
+    printf("[SetupWindow] Creating SDL window properties...\n");
+    SDL_PropertiesID props = SDL_CreateProperties();
+    printf("[SetupWindow] SDL_CreateProperties done\n");
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, g_targetWidth);
+    printf("[SetupWindow] SDL_SetNumberProperty width\n");
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, g_targetHeight);
+    printf("[SetupWindow] SDL_SetNumberProperty height\n");
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, m_fullScreen);
+    printf("[SetupWindow] SDL_SetBooleanProperty fullscreen\n");
+    SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, WINDOW_TITLE);
+    printf("[SetupWindow] SDL_SetStringProperty title\n");
 #ifdef MINIWIN
-	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN, true);
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN, true);
 #endif
 
-	window = SDL_CreateWindowWithProperties(props);
+    DebugFinder = (char*)"CreateWindow";
+    printf("[SetupWindow] Creating SDL window...\n");
+    window = SDL_CreateWindowWithProperties(props);
 #ifdef MINIWIN
-	m_windowHandle = reinterpret_cast<HWND>(window);
+    m_windowHandle = reinterpret_cast<HWND>(window);
 #else
-	m_windowHandle =
-		(HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+    m_windowHandle =
+        (HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 #endif
 
-	SDL_DestroyProperties(props);
+    SDL_DestroyProperties(props);
 
-	if (!m_windowHandle) {
-		return FAILURE;
-	}
+    if (!m_windowHandle) {
+        printf("[SetupWindow] Failed to get window handle\n");
+        return FAILURE;
+    }
+    printf("[SetupWindow] Window created and handle obtained\n");
 
-	SDL_IOStream* icon_stream = SDL_IOFromMem(isle_bmp, isle_bmp_len);
+    DebugFinder = (char*)"SetWindowIcon";
+    printf("[SetupWindow] Loading window icon...\n");
+    SDL_IOStream* icon_stream = SDL_IOFromMem(isle_bmp, isle_bmp_len);
 
-	if (icon_stream) {
-		SDL_Surface* icon = SDL_LoadBMP_IO(icon_stream, true);
+    if (icon_stream) {
+        SDL_Surface* icon = SDL_LoadBMP_IO(icon_stream, true);
 
-		if (icon) {
-			SDL_SetWindowIcon(window, icon);
-			SDL_DestroySurface(icon);
-		}
-		else {
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load icon: %s", SDL_GetError());
-		}
-	}
-	else {
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open SDL_IOStream for icon: %s", SDL_GetError());
-	}
+        if (icon) {
+            SDL_SetWindowIcon(window, icon);
+            SDL_DestroySurface(icon);
+            printf("[SetupWindow] Window icon set\n");
+        }
+        else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load icon: %s", SDL_GetError());
+        }
+    }
+    else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open SDL_IOStream for icon: %s", SDL_GetError());
+    }
 
-	if (!SetupLegoOmni()) {
-		return FAILURE;
-	}
+    DebugFinder = (char*)"SetupLegoOmni";
+    printf("[SetupWindow] Setting up LegoOmni...\n");
+    if (!SetupLegoOmni()) {
+        printf("[SetupWindow] SetupLegoOmni failed\n");
+        return FAILURE;
+    }
+    printf("[SetupWindow] SetupLegoOmni succeeded\n");
 
-	GameState()->SetSavePath(m_savePath);
+    DebugFinder = (char*)"SetSavePath";
+    printf("[SetupWindow] Setting save path...\n");
+    GameState()->SetSavePath(m_savePath);
 
-	if (VerifyFilesystem() != SUCCESS) {
-		return FAILURE;
-	}
+    DebugFinder = (char*)"VerifyFilesystem";
+    printf("[SetupWindow] Verifying filesystem...\n");
+    if (VerifyFilesystem() != SUCCESS) {
+        printf("[SetupWindow] VerifyFilesystem failed\n");
+        return FAILURE;
+    }
+    printf("[SetupWindow] Filesystem verified\n");
 
-	GameState()->SerializePlayersInfo(LegoStorage::c_read);
-	GameState()->SerializeScoreHistory(LegoStorage::c_read);
+    DebugFinder = (char*)"LoadPlayerInfo";
+    printf("[SetupWindow] Loading player info and score history...\n");
+    GameState()->SerializePlayersInfo(LegoStorage::c_read);
+    GameState()->SerializeScoreHistory(LegoStorage::c_read);
 
-	MxS32 iVar10;
-	switch (m_islandQuality) {
-	case 0:
-		iVar10 = 1;
-		break;
-	case 1:
-		iVar10 = 2;
-		break;
-	default:
-		iVar10 = 100;
-	}
+    DebugFinder = (char*)"ConfigurePresenters";
+    MxS32 iVar10;
+    switch (m_islandQuality) {
+    case 0:
+        iVar10 = 1;
+        break;
+    case 1:
+        iVar10 = 2;
+        break;
+    default:
+        iVar10 = 100;
+    }
 
-	MxS32 uVar1 = (m_islandTexture == 0);
-	LegoModelPresenter::configureLegoModelPresenter(uVar1);
-	LegoPartPresenter::configureLegoPartPresenter(uVar1, iVar10);
-	LegoWorldPresenter::configureLegoWorldPresenter(m_islandQuality);
-	LegoBuildingManager::configureLegoBuildingManager(m_islandQuality);
-	LegoROI::configureLegoROI(iVar10);
-	LegoAnimationManager::configureLegoAnimationManager(m_maxAllowedExtras);
-	RealtimeView::SetUserMaxLOD(m_maxLod);
-	if (LegoOmni::GetInstance()) {
-		if (LegoOmni::GetInstance()->GetInputManager()) {
-			LegoOmni::GetInstance()->GetInputManager()->SetUseJoystick(m_useJoystick);
-			LegoOmni::GetInstance()->GetInputManager()->SetJoystickIndex(m_joystickIndex);
-		}
-		MxDirect3D* d3d = LegoOmni::GetInstance()->GetVideoManager()->GetDirect3D();
-		if (d3d) {
-			SDL_Log(
-				"Direct3D driver name=\"%s\" description=\"%s\"",
-				d3d->GetDeviceName().c_str(),
-				d3d->GetDeviceDescription().c_str()
-			);
-		}
-		else {
-			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to get D3D device name and description");
-		}
-	}
+    MxS32 uVar1 = (m_islandTexture == 0);
+    printf("[SetupWindow] Configuring presenters and managers...\n");
+    LegoModelPresenter::configureLegoModelPresenter(uVar1);
+    LegoPartPresenter::configureLegoPartPresenter(uVar1, iVar10);
+    LegoWorldPresenter::configureLegoWorldPresenter(m_islandQuality);
+    LegoBuildingManager::configureLegoBuildingManager(m_islandQuality);
+    LegoROI::configureLegoROI(iVar10);
+    LegoAnimationManager::configureLegoAnimationManager(m_maxAllowedExtras);
+    RealtimeView::SetUserMaxLOD(m_maxLod);
 
-	IsleDebug_Init();
+    DebugFinder = (char*)"ConfigureInput";
+    if (LegoOmni::GetInstance()) {
+        if (LegoOmni::GetInstance()->GetInputManager()) {
+            LegoOmni::GetInstance()->GetInputManager()->SetUseJoystick(m_useJoystick);
+            LegoOmni::GetInstance()->GetInputManager()->SetJoystickIndex(m_joystickIndex);
+        }
+        MxDirect3D* d3d = LegoOmni::GetInstance()->GetVideoManager()->GetDirect3D();
+        if (d3d) {
+            SDL_Log(
+                "Direct3D driver name=\"%s\" description=\"%s\"",
+                d3d->GetDeviceName().c_str(),
+                d3d->GetDeviceDescription().c_str()
+            );
+        }
+        else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to get D3D device name and description");
+        }
+    }
 
-	return SUCCESS;
+    DebugFinder = (char*)"InitDebug";
+    printf("[SetupWindow] Initializing debug system...\n");
+    IsleDebug_Init();
+
+    DebugFinder = (char*)"SetupComplete";
+    printf("[SetupWindow] Setup complete\n");
+    return SUCCESS;
 }
 
 // FUNCTION: ISLE 0x4028d0
