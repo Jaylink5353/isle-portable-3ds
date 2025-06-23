@@ -17,7 +17,6 @@
 #endif
 #endif
 #if defined(__arm__) || defined(__aarch64__)
-#include <arm_neon.h>
 #endif
 #if defined(__wasm_simd128__)
 #include <wasm_simd128.h>
@@ -68,11 +67,8 @@ void Direct3DRMSoftwareRenderer::ClearZBuffer()
 	}
 #endif
 #elif defined(__arm__) || defined(__aarch64__)
-	if (SDL_HasNEON()) {
-		float32x4_t inf4 = vdupq_n_f32(inf);
-		for (; i + 4 <= size; i += 4) {
-			vst1q_f32(&m_zBuffer[i], inf4);
-		}
+	for (int j = 0; j < 4; ++j) {
+		m_zBuffer[i + j] = inf;
 	}
 #elif defined(__wasm_simd128__)
 	const size_t simdWidth = 4;
