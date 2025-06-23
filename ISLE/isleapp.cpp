@@ -55,11 +55,22 @@ char* DebugFinder;
 #include <3ds.h>
 #include <stdio.h>
 
+//edits by me
 int initThreeDeeS(){
 	consoleInit(GFX_BOTTOM, NULL);
 	printf("Debug info...\n");
+	return 0;
 }
 
+
+void LogDebugFinder(const char* DebugFinder) {
+    FILE* logFile = fopen("sdmc:/3ds/isle_debug.log", "a");
+    if (logFile) {
+        fprintf(logFile, "DebugFinder: %s\n", DebugFinder);
+        fclose(logFile);
+    }
+}
+//done edits
 DECOMP_SIZE_ASSERT(IsleApp, 0x8c)
 
 // GLOBAL: ISLE 0x410030
@@ -277,7 +288,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 			buffer,
 			sizeof(buffer),
 			"\"LEGO® Island\" failed to start.\n"
-			"Please quit all other applications and try again.\n"
+			"Please quit all other applications and try again. (SDL INIT)\n"
 			"SDL error: %s.\n"
 			"Error: \n"
 			"DebugFinder: %s",
@@ -310,7 +321,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 		Any_ShowSimpleMessageBox(
 			SDL_MESSAGEBOX_ERROR,
 			"LEGO® Island Error",
-			"\"LEGO® Island\" failed to start.\nPlease quit all other applications and try again.",
+			"\"LEGO® Island\" failed to start.\nPlease quit all other applications and try again. (SETUPWINDOW)",
 			window
 		);
 		return SDL_APP_FAILURE;
@@ -642,14 +653,18 @@ MxResult IsleApp::SetupWindow()
 {
     DebugFinder = (char*)"LoadConfig";
     printf("[SetupWindow] Loading configuration...\n");
+	LogDebugFinder(DebugFinder);
     if (!LoadConfig()) {
         printf("[SetupWindow] LoadConfig failed\n");
+		LogDebugFinder(DebugFinder);
         return FAILURE;
     }
     printf("[SetupWindow] Configuration loaded\n");
+	LogDebugFinder(DebugFinder);
 
     DebugFinder = (char*)"SetupVideoFlags";
     printf("[SetupWindow] Setting up video flags...\n");
+	LogDebugFinder(DebugFinder);
     SetupVideoFlags(
         m_fullScreen,
         m_flipSurfaces,
@@ -664,14 +679,17 @@ MxResult IsleApp::SetupWindow()
     printf("[SetupWindow] Video flags set\n");
 
     DebugFinder = (char*)"SetSound3D";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Setting 3D sound option...\n");
     MxOmni::SetSound3D(m_use3dSound);
 
     DebugFinder = (char*)"SeedRand";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Seeding random number generator...\n");
     srand(time(NULL));
 
     DebugFinder = (char*)"CreateCursors";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Creating system cursors...\n");
     m_cursorCurrent = m_cursorArrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
     printf("[SetupWindow] m_cursorArrow created\n");
@@ -683,6 +701,7 @@ MxResult IsleApp::SetupWindow()
     printf("[SetupWindow] SetCursor to m_cursorCurrent\n");
 
     DebugFinder = (char*)"CreateWindowProps";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Creating SDL window properties...\n");
     SDL_PropertiesID props = SDL_CreateProperties();
     printf("[SetupWindow] SDL_CreateProperties done\n");
@@ -699,6 +718,7 @@ MxResult IsleApp::SetupWindow()
 #endif
 
     DebugFinder = (char*)"CreateWindow";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Creating SDL window...\n");
     window = SDL_CreateWindowWithProperties(props);
 #ifdef MINIWIN
@@ -717,6 +737,7 @@ MxResult IsleApp::SetupWindow()
     printf("[SetupWindow] Window created and handle obtained\n");
 
     DebugFinder = (char*)"SetWindowIcon";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Loading window icon...\n");
     SDL_IOStream* icon_stream = SDL_IOFromMem(isle_bmp, isle_bmp_len);
 
@@ -737,6 +758,7 @@ MxResult IsleApp::SetupWindow()
     }
 
     DebugFinder = (char*)"SetupLegoOmni";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Setting up LegoOmni...\n");
     if (!SetupLegoOmni()) {
         printf("[SetupWindow] SetupLegoOmni failed\n");
@@ -745,10 +767,12 @@ MxResult IsleApp::SetupWindow()
     printf("[SetupWindow] SetupLegoOmni succeeded\n");
 
     DebugFinder = (char*)"SetSavePath";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Setting save path...\n");
     GameState()->SetSavePath(m_savePath);
 
     DebugFinder = (char*)"VerifyFilesystem";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Verifying filesystem...\n");
     if (VerifyFilesystem() != SUCCESS) {
         printf("[SetupWindow] VerifyFilesystem failed\n");
@@ -757,11 +781,13 @@ MxResult IsleApp::SetupWindow()
     printf("[SetupWindow] Filesystem verified\n");
 
     DebugFinder = (char*)"LoadPlayerInfo";
+	LogDebugFinder(DebugFinder);
     printf("[SetupWindow] Loading player info and score history...\n");
     GameState()->SerializePlayersInfo(LegoStorage::c_read);
     GameState()->SerializeScoreHistory(LegoStorage::c_read);
 
     DebugFinder = (char*)"ConfigurePresenters";
+	LogDebugFinder(DebugFinder);
     MxS32 iVar10;
     switch (m_islandQuality) {
     case 0:
@@ -785,6 +811,7 @@ MxResult IsleApp::SetupWindow()
     RealtimeView::SetUserMaxLOD(m_maxLod);
 
     DebugFinder = (char*)"ConfigureInput";
+	LogDebugFinder(DebugFinder);
     if (LegoOmni::GetInstance()) {
         if (LegoOmni::GetInstance()->GetInputManager()) {
             LegoOmni::GetInstance()->GetInputManager()->SetUseJoystick(m_useJoystick);
@@ -805,10 +832,12 @@ MxResult IsleApp::SetupWindow()
 
     DebugFinder = (char*)"InitDebug";
     printf("[SetupWindow] Initializing debug system...\n");
+	LogDebugFinder(DebugFinder);
     IsleDebug_Init();
 
     DebugFinder = (char*)"SetupComplete";
     printf("[SetupWindow] Setup complete\n");
+	LogDebugFinder(DebugFinder); 
     return SUCCESS;
 }
 
