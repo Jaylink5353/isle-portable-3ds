@@ -722,21 +722,33 @@ MxResult IsleApp::SetupWindow()
     printf("[SetupWindow] Creating SDL window...\n");
     window = SDL_CreateWindowWithProperties(props);
 #ifdef MINIWIN
-   m_windowHandle = reinterpret_cast<HWND>(window);//fails here 
+    m_windowHandle = reinterpret_cast<HWND>(window);
+#elif defined(_3DS) || defined(__3DS__) // Add your 3DS platform macro here
+    m_windowHandle = window; // store as void* or SDL_Window*, not HWND
 #else
     m_windowHandle =
         (HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 #endif
-	//fails here
     SDL_DestroyProperties(props);
 
-    if (!m_windowHandle) {
+    if (!window) {
         printf("[SetupWindow] Failed to get window handle\n");
 		DebugFinder = (char*)"[SetupWindow] Failed to get window handle";
 		LogDebugFinder(DebugFinder);
         return FAILURE;
     }
+	#ifdef MINIWIN
+    m_windowHandle = reinterpret_cast<HWND>(window);
+	#elif defined(_3DS) || defined(__3DS__)
+    m_windowHandle = window;
+	else
+    m_windowHandle =
+        (HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+	#endif
+
     printf("[SetupWindow] Window created and handle obtained\n");
+	DebugFinder = (char*)"[SetupWindow] Window created and handle obtained";
+	LogDebugFinder(DebugFinder);
 
     DebugFinder = (char*)"SetWindowIcon";
 	LogDebugFinder(DebugFinder);
