@@ -722,16 +722,18 @@ MxResult IsleApp::SetupWindow()
     printf("[SetupWindow] Creating SDL window...\n");
     window = SDL_CreateWindowWithProperties(props);
 #ifdef MINIWIN
-    m_windowHandle = reinterpret_cast<HWND>(window);
+   m_windowHandle = reinterpret_cast<HWND>(window);//fails here 
 #else
     m_windowHandle =
         (HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 #endif
-
+	//fails here
     SDL_DestroyProperties(props);
 
     if (!m_windowHandle) {
         printf("[SetupWindow] Failed to get window handle\n");
+		DebugFinder = (char*)"[SetupWindow] Failed to get window handle";
+		LogDebugFinder(DebugFinder);
         return FAILURE;
     }
     printf("[SetupWindow] Window created and handle obtained\n");

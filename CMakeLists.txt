@@ -10,6 +10,8 @@ endif()
 #this is for 3ds only, comment if ur not using 3ds ??
 set(IS_3DS TRUE)
 
+add_subdirectory(3rdparty/iniparser)
+
 if (EMSCRIPTEN)
   add_compile_options(-pthread)
   add_link_options(-sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2gb -sUSE_PTHREADS=1 -sPROXY_TO_PTHREAD=1 -sPTHREAD_POOL_SIZE_STRICT=0 -sFORCE_FILESYSTEM=1 -sWASMFS=1 -sEXIT_RUNTIME=1)
@@ -481,7 +483,7 @@ if (ISLE_BUILD_APP)
   target_link_libraries(isle PRIVATE $<$<BOOL:${ISLE_USE_DX5}>:DirectX5::DirectX5>)
 
   # Link SDL and iniparser
-  target_link_libraries(isle PRIVATE SDL3::SDL3 iniparser-static)
+  target_link_libraries(isle PRIVATE SDL3::SDL3 iniparser)
 
   # Allow unconditional include of miniwin/miniwindevice.h
   target_link_libraries(isle PRIVATE miniwin-headers)
