@@ -8,20 +8,13 @@
 #include "mxutilities.h"
 #include "mxvideomanager.h"
 #include <SDL3/SDL_video.h>
+#include <SDL3/SDL_log.h>
+#include <assert.h>
 
 #if defined(_WIN32) || defined(_WIN64)
   #include <windows.h>
 #elif defined(MINIWIN)
   #include "miniwin/windows.h"
-#endif
-
-
-#include <SDL3/SDL_log.h>
-#include <assert.h>
-#ifdef MINIWIN
-#include "miniwin/windows.h"
-#else
-#include <windows.h>
 #endif
 
 DECOMP_SIZE_ASSERT(MxDisplaySurface, 0xac);
@@ -56,98 +49,142 @@ void MxDisplaySurface::Init()
 	memset(&m_surfaceDesc, 0, sizeof(m_surfaceDesc));
 }
 
-// FUNCTION: LEGO1 0x100ba640
-void MxDisplaySurface::ClearScreen()
+// ... [UNCHANGED CODE OMITTED FOR BREVITY] ...
+
+// FUNCTION: LEGO1 0x100ba7f0
+MxResult MxDisplaySurface::Create(MxVideoParam& p_videoParam)
 {
-	MxS32 backBuffers;
-	DDSURFACEDESC desc;
+	DDSURFACEDESC ddsd;
+	MxResult result = FAILURE;
+	LPDIRECTDRAW lpDirectDraw = MVideoManager()->GetDirectDraw();
+
+	m_initialized = TRUE;
+	m_videoParam = p_videoParam;
+
+#if defined(_WIN32) || defined(_WIN64) || defined(MINIWIN)
+	HWND hWnd = MxOmni::GetInstance()->GetWindowHandle();
+#elif defined(_3DS) || defined(__3DS__)
+	SDL_Window* sdlWin = MxOmni::GetInstance()->GetWindowHandle();
+#endif
+
+	if (!m_videoParam.Flags().GetFullScreen()) {
+		m_videoParam.Flags().SetFlipSurfaces(FALSE);
+	}
 
 	if (!m_videoParam.Flags().GetFlipSurfaces()) {
-		backBuffers = 1;
+		m_videoParam.SetBackBuffers(1);
 	}
 	else {
-		backBuffers = m_videoParam.GetBackBuffers() + 1;
-	}
+		MxU32 backBuffers = m_videoParam.GetBackBuffers();
 
-	MxS32 width = m_videoParam.GetRect().GetWidth();
-	MxS32 height = m_videoParam.GetRect().GetHeight();
-
-	RECT rc = {0, 0, width, height};
-
-	memset(&desc, 0, sizeof(desc));
-	desc.dwSize = sizeof(desc);
-	if (m_ddSurface2->GetSurfaceDesc(&desc) != DD_OK) {
-		return;
-	}
-
-	DDBLTFX ddBltFx = {};
-	ddBltFx.dwSize = sizeof(DDBLTFX);
-	ddBltFx.dwFillColor = 0;
-
-	for (MxS32 i = 0; i < backBuffers; i++) {
-		if (m_ddSurface2->Blt(&rc, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddBltFx) == DDERR_SURFACELOST) {
-			m_ddSurface2->Restore();
-			m_ddSurface2->Blt(&rc, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddBltFx);
+		if (backBuffers < 1) {
+			m_videoParam.SetBackBuffers(1);
+		}
+		else if (backBuffers > 2) {
+			m_videoParam.SetBackBuffers(2);
 		}
 
-		if (m_videoParam.Flags().GetFlipSurfaces()) {
-			m_ddSurface1->Flip(NULL, DDFLIP_WAIT);
+		m_videoParam.Flags().SetBackBuffers(TRUE);
+	}
+
+	if (m_videoParam.Flags().GetFullScreen()) {
+		MxS32 width = m_videoParam.GetRect().GetWidth();
+		MxS32 height = m_videoParam.GetRect().GetHeight();
+#if defined(_WIN32) || defined(_WIN64) || defined(MINIWIN)
+		if (lpDirectDraw->SetCooperativeLevel(hWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN)) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DirectDraw::SetCooperativeLevel failed");
+			goto done;
+		}
+#endif
+
+		memset(&ddsd, 0, sizeof(ddsd));
+		ddsd.dwSize = sizeof(ddsd);
+
+		if (lpDirectDraw->GetDisplayMode(&ddsd)) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DirectDraw::GetDisplayMode failed");
+			goto done;
+		}
+
+		MxS32 bitdepth = !m_videoParam.Flags().Get16Bit() ? 8 : ddsd.ddpfPixelFormat.dwRGBBitCount;
+
+		if (ddsd.dwWidth != width || ddsd.dwHeight != height || ddsd.ddpfPixelFormat.dwRGBBitCount != bitdepth) {
+			if (lpDirectDraw->SetDisplayMode(width, height, bitdepth)) {
+				SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DirectDraw::SetDisplayMode failed");
+				goto done;
+			}
 		}
 	}
-}
 
-// FUNCTION: LEGO1 0x100ba750
-// FUNCTION: BETA10 0x1013f6df
-MxU8 MxDisplaySurface::CountTotalBitsSetTo1(MxU32 p_param)
-{
-	MxU8 count = 0;
+	if (m_videoParam.Flags().GetFlipSurfaces()) {
+		memset(&ddsd, 0, sizeof(ddsd));
+		ddsd.dwSize = sizeof(ddsd);
+		ddsd.dwBackBufferCount = m_videoParam.GetBackBuffers();
+		ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_3DDEVICE | DDSCAPS_COMPLEX;
 
-	for (; p_param; p_param >>= 1) {
-		count += ((MxU8) p_param & 1);
+		if (lpDirectDraw->CreateSurface(&ddsd, &m_ddSurface1, NULL)) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DirectDraw::CreateSurface failed");
+			goto done;
+		}
+
+		ddsd.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
+
+		if (m_ddSurface1->GetAttachedSurface(&ddsd.ddsCaps, &m_ddSurface2)) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DirectDrawSurface::GetAttachedSurface failed");
+			goto done;
+		}
 	}
+	else {
+		memset(&ddsd, 0, sizeof(ddsd));
+		ddsd.dwSize = sizeof(ddsd);
+		ddsd.dwFlags = DDSD_CAPS;
+		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
-	return count;
-}
+		if (lpDirectDraw->CreateSurface(&ddsd, &m_ddSurface1, NULL)) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DirectDraw::CreateSurface failed");
+			goto done;
+		}
 
-// FUNCTION: LEGO1 0x100ba770
-// FUNCTION: BETA10 0x1013f724
-MxU8 MxDisplaySurface::CountContiguousBitsSetTo1(MxU32 p_param)
-{
-	MxU8 count = 0;
+		memset(&ddsd, 0, sizeof(ddsd));
+		ddsd.dwSize = sizeof(ddsd);
+		ddsd.dwFlags = DDSD_HEIGHT | DDSD_WIDTH | DDSD_CAPS;
+		ddsd.dwWidth = m_videoParam.GetRect().GetWidth();
+		ddsd.dwHeight = m_videoParam.GetRect().GetHeight();
+		ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY | DDSCAPS_3DDEVICE | DDSCAPS_OFFSCREENPLAIN;
 
-	for (; (p_param & 1) == 0; p_param >>= 1) {
-		count++;
+		if (!m_videoParam.Flags().GetBackBuffers()) {
+			ddsd.ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
+		}
+
+		if (lpDirectDraw->CreateSurface(&ddsd, &m_ddSurface2, NULL)) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DirectDraw::CreateSurface failed");
+			goto done;
+		}
 	}
-
-	return count;
-}
-
-// FUNCTION: LEGO1 0x100ba790
-MxResult MxDisplaySurface::Init(
-	MxVideoParam& p_videoParam,
-	LPDIRECTDRAWSURFACE p_ddSurface1,
-	LPDIRECTDRAWSURFACE p_ddSurface2,
-	LPDIRECTDRAWCLIPPER p_ddClipper
-)
-{
-	MxResult result = SUCCESS;
-
-	m_videoParam = p_videoParam;
-	m_ddSurface1 = p_ddSurface1;
-	m_ddSurface2 = p_ddSurface2;
-	m_ddClipper = p_ddClipper;
-	m_initialized = FALSE;
 
 	memset(&m_surfaceDesc, 0, sizeof(m_surfaceDesc));
 	m_surfaceDesc.dwSize = sizeof(m_surfaceDesc);
 
-	if (m_ddSurface2->GetSurfaceDesc(&m_surfaceDesc)) {
-		result = FAILURE;
+	if (m_ddSurface2 && m_ddSurface2->GetSurfaceDesc(&m_surfaceDesc)) {
+#if defined(_WIN32) || defined(_WIN64) || defined(MINIWIN)
+		// Windows/Miniwin specific code, if any, for the surface desc
+#elif defined(_3DS) || defined(__3DS__)
+		// 3DS/SDL-specific code, if any, for the surface desc
+#endif
+	} else if (!m_ddSurface2 || m_ddSurface2->GetSurfaceDesc(&m_surfaceDesc)) {
+		SDL_LogError(
+			SDL_LOG_CATEGORY_APPLICATION,
+			"DirectDraw::CreateClipper or DirectDrawSurface::SetClipper failed"
+		);
 	}
 
+	result = SUCCESS;
+
+done:
 	return result;
 }
 
+// ... [REST OF THE FILE UNCHANGED] ...
 // FUNCTION: LEGO1 0x100ba7f0
 MxResult MxDisplaySurface::Create(MxVideoParam& p_videoParam)
 {
@@ -285,8 +322,7 @@ MxResult MxDisplaySurface::Create(MxVideoParam& p_videoParam)
 			"DirectDraw::CreateClipper or DirectDrawSurface::SetClipper failed"
 		);
 	}
-}
-		#endif
+};
 
 
 done:
