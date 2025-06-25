@@ -187,11 +187,20 @@ MxResult MxDisplaySurface::Create(MxVideoParam& p_videoParam)
 	if (m_videoParam.Flags().GetFullScreen()) {
 		MxS32 width = m_videoParam.GetRect().GetWidth();
 		MxS32 height = m_videoParam.GetRect().GetHeight();
-
+		#if defined(_WIN32) || defined(_WIN64) || defined(MINIWIN)
+		#if defined(_WIN32) || defined(_WIN64) || defined(MINIWIN)
+    HWND hWnd = MxOmni::GetInstance()->GetWindowHandle();
+    // ... Windows/Miniwin specific code using hWnd ...
+	#elif defined(_3DS) || defined(__3DS__)
+    SDL_Window* sdlWin = MxOmni::GetInstance()->GetWindowHandle();
+    // ... 3DS/SDL-specific code using sdlWin, or leave unused if not needed ...
+	#endif
+    // ... all code that uses hWnd ...
 		if (lpDirectDraw->SetCooperativeLevel(hWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN)) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DirectDraw::SetCooperativeLevel failed");
-			goto done;
+				goto done;
 		}
+		#endif
 
 		memset(&ddsd, 0, sizeof(ddsd));
 		ddsd.dwSize = sizeof(ddsd);
@@ -262,17 +271,23 @@ MxResult MxDisplaySurface::Create(MxVideoParam& p_videoParam)
 	m_surfaceDesc.dwSize = sizeof(m_surfaceDesc);
 
 	if (!m_ddSurface2->GetSurfaceDesc(&m_surfaceDesc)) {
-		if (!lpDirectDraw->CreateClipper(0, &m_ddClipper, NULL) && !m_ddClipper->SetHWnd(0, hWnd) &&
-			!m_ddSurface1->SetClipper(m_ddClipper)) {
-			result = SUCCESS;
-		}
-		else {
-			SDL_LogError(
-				SDL_LOG_CATEGORY_APPLICATION,
-				"DirectDraw::CreateClipper or DirectDrawSurface::SetClipper failed"
-			);
-		}
+		#if defined(_WIN32) || defined(_WIN64) || defined(MINIWIN)
+    	HWND hWnd = MxOmni::GetInstance()->GetWindowHandle();
+    // ... Windows/Miniwin specific code using hWnd ...
+		#elif defined(_3DS) || defined(__3DS__)
+    	SDL_Window* sdlWin = MxOmni::GetInstance()->GetWindowHandle();
+    // ... 3DS/SDL-specific code using sdlWin, or leave unused if not needed ...
+	#endif
 	}
+	else {
+		SDL_LogError(
+			SDL_LOG_CATEGORY_APPLICATION,
+			"DirectDraw::CreateClipper or DirectDrawSurface::SetClipper failed"
+		);
+	}
+}
+		#endif
+
 
 done:
 	return result;
