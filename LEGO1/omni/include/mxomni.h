@@ -68,7 +68,11 @@ public:
 	static void SetInstance(MxOmni* p_instance);
 	static MxBool ActionSourceEquals(MxDSAction* p_action, const char* p_name);
 
+#if defined(_3DS) || defined(__3DS__)
+	SDL_Window* GetWindowHandle() const { return m_windowHandle; }
+#else
 	HWND GetWindowHandle() const { return m_windowHandle; }
+#endif
 
 	// FUNCTION: BETA10 0x10125100
 	MxObjectFactory* GetObjectFactory() const { return this->m_objectFactory; }
@@ -113,7 +117,13 @@ protected:
 	static vector<MxString> GlobIsleFiles(const MxString& p_path);
 
 	MxString m_mediaPath;                         // 0x08
+
+#if defined(_3DS) || defined(__3DS__)
+	SDL_Window* m_windowHandle;                   // 0x18
+#else
 	HWND m_windowHandle;                          // 0x18
+#endif
+
 	MxObjectFactory* m_objectFactory;             // 0x1c
 	MxVariableTable* m_variableTable;             // 0x20
 	MxTickleManager* m_tickleManager;             // 0x24

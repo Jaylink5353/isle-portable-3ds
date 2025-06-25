@@ -7,6 +7,14 @@
 #include "mxpalette.h"
 #include "mxutilities.h"
 #include "mxvideomanager.h"
+#include <SDL3/SDL_video.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+  #include <windows.h>
+#elif defined(MINIWIN)
+  #include "miniwin/windows.h"
+#endif
+
 
 #include <SDL3/SDL_log.h>
 #include <assert.h>
@@ -146,7 +154,12 @@ MxResult MxDisplaySurface::Create(MxVideoParam& p_videoParam)
 	DDSURFACEDESC ddsd;
 	MxResult result = FAILURE;
 	LPDIRECTDRAW lpDirectDraw = MVideoManager()->GetDirectDraw();
+	#if defined(_3DS) || defined(__3DS__)
+	SDL_Window* sdlWin = MxOmni::GetInstance()->GetWindowHandle();
+	// Implement SDL logic or leave as a no-op if not needed
+	#else
 	HWND hWnd = MxOmni::GetInstance()->GetWindowHandle();
+	#endif
 
 	m_initialized = TRUE;
 	m_videoParam = p_videoParam;
@@ -803,7 +816,13 @@ void MxDisplaySurface::Display(MxS32 p_left, MxS32 p_top, MxS32 p_left2, MxS32 p
 		}
 		else {
 			MxPoint32 point(0, 0);
-			ClientToScreen(MxOmni::GetInstance()->GetWindowHandle(), (LPPOINT) &point);
+			#if defined(_3DS) || defined(__3DS__)
+	// No-op or SDL replacement if needed.
+	// Example: SDL does not have a direct equivalent, so you might just skip this or implement your own logic.
+	#else
+	ClientToScreen(MxOmni::GetInstance()->GetWindowHandle(), (LPPOINT)&point);
+	#endif
+
 
 			p_left2 += m_videoParam.GetRect().GetLeft() + point.GetX();
 			p_top2 += m_videoParam.GetRect().GetTop() + point.GetY();

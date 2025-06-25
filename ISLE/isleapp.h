@@ -42,7 +42,7 @@ public:
 
 	static MxU8 MapMouseButtonFlagsToModifier(SDL_MouseButtonFlags p_flags);
 
-	HWND GetWindowHandle() { return m_windowHandle; }
+	SDL_Window* GetWindowHandle() { return m_windowHandle; }
 	MxLong GetFrameDelta() { return m_frameDelta; }
 	MxS32 GetFullScreen() { return m_fullScreen; }
 	SDL_Cursor* GetCursorCurrent() { return m_cursorCurrent; }
@@ -79,7 +79,7 @@ private:
 	MxLong m_frameDelta;         // 0x48
 	MxVideoParam m_videoParam;   // 0x4c
 	MxS32 m_windowActive;        // 0x70
-	HWND m_windowHandle;         // 0x74
+	SDL_Window* m_windowHandle;         // 0x74
 	MxS32 m_drawCursor;          // 0x78
 	SDL_Cursor* m_cursorArrow;   // 0x7c
 	SDL_Cursor* m_cursorBusy;    // 0x80

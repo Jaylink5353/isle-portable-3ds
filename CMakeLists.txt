@@ -9,6 +9,8 @@ endif()
 
 #this is for 3ds only, comment if ur not using 3ds ??
 set(IS_3DS TRUE)
+add_definitions(-D_3DS)
+add_definitions(-D__3DS__)
 
 add_subdirectory(3rdparty/iniparser)
 
